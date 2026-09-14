@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ariana · Ingresar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0A151E; --bg-2:#0E1E29; --ink:#E8F0F3; --muted:#7E96A4; --faint:#46606F;
+    --line:#213A48; --node:#2DD4BF; --node-soft:rgba(45,212,191,.14); --chip:#0F212D;
+    --chip-brd:#23404E; --red:#F46A6A;
+    --f-display:"Space Grotesk",system-ui,sans-serif; --f-mono:"IBM Plex Mono",monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--f-display);
+    display:grid;place-items:center;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(rgba(45,212,191,.04) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(45,212,191,.04) 1px,transparent 1px);
+    background-size:46px 46px;}
+  .card{width:min(380px,92vw);background:var(--bg-2);border:1px solid var(--chip-brd);
+    border-radius:16px;padding:34px 30px;box-shadow:0 30px 60px -30px rgba(0,0,0,.7);}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .glyph{width:34px;height:34px;border-radius:9px;display:grid;place-content:center;
+    background:var(--node-soft);border:1px solid rgba(45,212,191,.5);}
+  .glyph::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--node);
+    box-shadow:0 0 10px 1px rgba(45,212,191,.7);}
+  .brand b{font-size:20px;font-weight:600;}
+  .sub{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);margin:0 0 26px;}
+  form{display:flex;flex-direction:column;gap:14px;}
+  label{display:flex;flex-direction:column;gap:6px;font-family:var(--f-mono);font-size:10px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  input{background:var(--chip);border:1px solid var(--chip-brd);border-radius:9px;color:var(--ink);
+    font-family:var(--f-display);font-size:15px;padding:11px 13px;}
+  input:focus{outline:none;border-color:var(--node);}
+  button{margin-top:6px;background:var(--node-soft);border:1px solid rgba(45,212,191,.5);
+    color:var(--node);font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;
+    text-transform:uppercase;padding:12px;border-radius:9px;cursor:pointer;font-weight:600;}
+  button:hover{background:rgba(45,212,191,.24);}
+  .err{color:var(--red);font-family:var(--f-mono);font-size:12px;min-height:16px;text-align:center;}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand"><span class="glyph"></span><b>Ariana</b></div>
+    <p class="sub">Oficina Técnica</p>
+    <form id="loginForm" autocomplete="on">
+      <label>user<input name="usuario" autocomplete="username" autofocus></label>
+      <label>Contraseña<input name="clave" type="password" autocomplete="current-password"></label>
+      <button type="submit">Ingresar</button>
+      <div class="err" id="err"></div>
+    </form>
+  </div>
+<script>
+  document.getElementById("loginForm").addEventListener("submit", async e=>{
+    e.preventDefault();
+    const f=e.target, err=document.getElementById("err");
+    err.textContent="";
+    try{
+      const res=await fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({usuario:f.usuario.value, clave:f.clave.value})});
+      const d=await res.json();
+      if(d.ok) location.href="/";
+      else err.textContent=d.error||"No se pudo ingresar";
+    }catch(x){ err.textContent="Error de conexión"; }
+  });
+</script>
+</body>
+</html>

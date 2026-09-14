@@ -1,0 +1,122 @@
+[
+  {
+    "idx": 1,
+    "entry_id": "DEMO0000612DD272D1371C17149D439536B3",
+    "received": "2026-09-12 16:45:00+00:00",
+    "sender_name": "Diego Torres",
+    "sender_email": "d.torres@example.com",
+    "subject": "OC-NORTHWIND BREWING-12/09/2026",
+    "num_adjuntos": 1,
+    "adjuntos": [
+      "PO_1642.pdf"
+    ],
+    "body": "N° de OC del cliente: 1642\r\nMONTO SIN IVA: USD 534.86\r\nFecha de entrega: immediate\r\nProveedor: OEM-partner\r\nFabricación: SI\r\n"
+  },
+  {
+    "idx": 2,
+    "entry_id": "DEMO0001B975729FAE923D5A4FD12AABFE22",
+    "received": "2026-09-10 12:30:00+00:00",
+    "sender_name": "Alex Rivera",
+    "sender_email": "a.rivera@example.com",
+    "subject": "OC-CASCADE POWER-10/09/2026",
+    "num_adjuntos": 0,
+    "adjuntos": [],
+    "body": "N° de OC del cliente: 5246\r\nMONTO SIN IVA: USD 4756.22\r\nFecha de entrega: 15/11\r\nProveedor: OEM-partner\r\nFabricación: NO\r\n"
+  },
+  {
+    "idx": 3,
+    "entry_id": "DEMO0002B0EB53F16947CCF25EC84D8DBC74",
+    "received": "2026-09-08 09:11:00+00:00",
+    "sender_name": "Alex Rivera",
+    "sender_email": "a.rivera@example.com",
+    "subject": "OC-DELTA CHEMICALS-08/09/2026",
+    "num_adjuntos": 1,
+    "adjuntos": [
+      "PO_7401.pdf"
+    ],
+    "body": "N° de OC del cliente: 7401\r\nMONTO SIN IVA: USD 2996.5\r\nFecha de entrega: immediate\r\nProveedor: OEM-partner\r\nFabricación: NO\r\n"
+  },
+  {
+    "idx": 4,
+    "entry_id": "DEMO0003DBA41ECCCC3FC1626E53A13043B0",
+    "received": "2026-09-06 09:55:00+00:00",
+    "sender_name": "Sam Carter",
+    "sender_email": "s.carter@example.com",
+    "subject": "OC-MERIDIAN DAIRY-06/09/2026",
+    "num_adjuntos": 1,
+    "adjuntos": [
+      "PO_3087.pdf"
+    ],
+    "body": "N° de OC del cliente: 3087\r\nMONTO SIN IVA: USD 193.63\r\nFecha de entrega: immediate\r\nProveedor: SP\r\nFabricación: NO\r\n"
+  },
+  {
+    "idx": 5,
+    "entry_id": "DEMO0004FEFF9243A8F506B40928B5B7A767",
+    "received": "2026-09-03 14:47:00+00:00",
+    "sender_name": "Sam Carter",
+    "sender_email": "s.carter@example.com",
+    "subject": "OC-VULCAN STEEL-03/09/2026",
+    "num_adjuntos": 1,
+    "adjuntos": [
+      "PO_4548877189.pdf"
+    ],
+    "body": "N° de OC del cliente: 4548877189\r\nMONTO SIN IVA: USD 2456.27\r\nFecha de entrega: 15/11\r\nProveedor: internal\r\nFabricación: SI\r\n"
+  },
+  {
+    "idx": 6,
+    "entry_id": "DEMO0005BEBB2737F6A6F0FB23C6F5DA2CEC",
+    "received": "2026-09-02 09:46:00+00:00",
+    "sender_name": "Sam Carter",
+    "sender_email": "s.carter@example.com",
+    "subject": "OC-AURORA PHARMA-02/09/2026",
+    "num_adjuntos": 1,
+    "adjuntos": [
+      "PO_4503749650.pdf"
+    ],
+    "body": "N° de OC del cliente: 4503749650\r\nMONTO SIN IVA: USD 3429.4\r\nFecha de entrega: immediate\r\nProveedor: SP\r\nFabricación: NO\r\n"
+  },
+  {
+    "idx": 7,
+    "entry_id": "DEMO0006FB440034D6608697A8D41BED440E",
+    "received": "2026-08-31 10:38:00+00:00",
+    "sender_name": "Sam Carter",
+    "sender_email": "s.carter@example.com",
+    "subject": "OC-TITAN CEMENT-31/08/2026",
+    "num_adjuntos": 0,
+    "adjuntos": [],
+    "body": "N° de OC del cliente: 7724\r\nMONTO SIN IVA: USD 339.51\r\nFecha de entrega: 10 days\r\nProveedor: internal\r\nFabricación: NO\r\n"
+  },
+  {
+    "idx": 8,
+    "entry_id": "DEMO0007F3176813E02EA68EF786E4D3CEA2",
+    "received": "2026-08-29 11:27:00+00:00",
+    "sender_name": "Alex Rivera",
+    "sender_email": "a.rivera@example.com",
+    "subject": "OC-BLUE RIDGE ENERGY-29/08/2026",
+    "num_adjuntos": 0,
+    "adjuntos": [],
+    "body": "N° de OC del cliente: 9217\r\nMONTO SIN IVA: USD 4540.3\r\nFecha de entrega: 30 days\r\nProveedor: SP\r\nFabricación: SI\r\n"
+  },
+  {
+    "idx": 9,
+    "entry_id": "DEMO0008484E73CF575DCAD6BA2B0AEE0CA9",
+    "received": "2026-08-27 16:04:00+00:00",
+    "sender_name": "Alex Rivera",
+    "sender_email": "a.rivera@example.com",
+    "subject": "OC-SUMMIT MINING-27/08/2026",
+    "num_adjuntos": 0,
+    "adjuntos": [],
+    "body": "N° de OC del cliente: 2630\r\nMONTO SIN IVA: USD 7464.68\r\nFecha de entrega: 10 days\r\nProveedor: OEM-partner\r\nFabricación: NO\r\n"
+  },
+  {
+    "idx": 10,
+    "entry_id": "DEMO0009D8C4FA2815D2802827283E0AD841",
+    "received": "2026-08-25 16:45:00+00:00",
+    "sender_name": "Alex Rivera",
+    "sender_email": "a.rivera@example.com",
+    "subject": "OC-HARBOR FOODS-25/08/2026",
+    "num_adjuntos": 0,
+    "adjuntos": [],
+    "body": "N° de OC del cliente: 4505313436\r\nMONTO SIN IVA: USD 1067.02\r\nFecha de entrega: 45 days\r\nProveedor: SP\r\nFabricación: NO\r\n"
+  }
+]

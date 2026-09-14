@@ -1,0 +1,5 @@
+Flask>=3.0
+Werkzeug>=3.0
+requests>=2.31
+# Outlook COM automation — Windows only; the web UI and the demo run without it.
+pywin32>=306 ; sys_platform == "win32"

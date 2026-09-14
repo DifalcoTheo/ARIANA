@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ariana · Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:#0A151E; --bg-2:#0E1E29; --drawer:#0C1B25; --ink:#E8F0F3;
+    --muted:#7E96A4; --faint:#46606F; --line:#213A48; --node:#2DD4BF;
+    --node-soft:rgba(45,212,191,.14); --amber:#F4A93C; --red:#F46A6A;
+    --chip:#0F212D; --chip-brd:#23404E; --focus:#6FE9DA;
+    --f-display:"Space Grotesk",system-ui,sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink);
+    font-family:var(--f-display); -webkit-font-smoothing:antialiased; }
+  body { overflow:hidden; }
+  body.view-oc, body.view-comercial, body.view-calendario, body.view-fabricacion, body.view-clientes { overflow:auto; }
+  body::before { content:""; position:fixed; inset:0;
+    background-image:linear-gradient(rgba(45,212,191,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(45,212,191,.035) 1px,transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0%,transparent 78%);
+    mask-image:radial-gradient(circle at 50% 50%,#000 0%,transparent 78%);
+    pointer-events:none; z-index:0; }
+
+  /* ── Escenario radial (Panel principal) ── */
+  .stage { position:fixed; inset:0; z-index:1; }
+  body.view-oc .stage, body.view-comercial .stage, body.view-calendario .stage, body.view-fabricacion .stage, body.view-clientes .stage { display:none; }
+  .cli-view{ position:relative; z-index:1; display:none; max-width:1080px; margin:0 auto; padding:84px 22px 60px; }
+  body.view-clientes .cli-view{ display:block; }
+  .cli-notas{ margin-top:26px; background:var(--bg-2); border:1px solid var(--chip-brd); border-radius:12px; padding:18px 22px; }
+  .cli-notas h3{ font-family:var(--f-display); font-weight:600; font-size:16px; margin:0 0 4px; }
+  .cli-notas .hint{ color:var(--muted); font-size:12.5px; margin:0 0 10px; }
+  .cli-nota-sec{ padding:10px 0; border-bottom:1px solid var(--line); }
+  .cli-nota-sec:last-child{ border-bottom:0; }
+  .cli-nota-sec b{ color:var(--node); }
+  .cli-nota-sec ul{ margin:6px 0 0; padding-left:18px; color:var(--muted); font-size:13.5px; }
+  .cli-nota-sec li{ margin-bottom:4px; }
+  .fab-view{ position:relative; z-index:1; display:none; max-width:1080px; margin:0 auto; padding:84px 22px 60px; }
+  body.view-fabricacion .fab-view{ display:block; }
+  .btn-gaspi{ display:inline-flex; align-items:center; gap:7px; margin-bottom:16px;
+    font-family:var(--f-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    padding:10px 18px; border-radius:9px; text-decoration:none; font-weight:600;
+    background:var(--node-soft); border:1px solid rgba(45,212,191,.5); color:var(--node);
+    transition:background .18s; }
+  .btn-gaspi:hover{ background:rgba(45,212,191,.24); }
+  .wires { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .wire { fill:none; stroke:var(--line); stroke-width:1.4;
+    stroke-dasharray:var(--len); stroke-dashoffset:var(--len);
+    animation:draw .9s cubic-bezier(.5,.1,.2,1) forwards; animation-delay:var(--d,0s); }
+  @keyframes draw { to { stroke-dashoffset:0; } }
+  .node { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:clamp(150px,22vmin,230px); height:clamp(150px,22vmin,230px); border-radius:50%;
+    display:grid; place-content:center; text-align:center;
+    background:radial-gradient(circle at 50% 42%,var(--node-soft),transparent 70%),var(--bg-2);
+    border:1px solid rgba(45,212,191,.5);
+    box-shadow:0 0 0 8px rgba(45,212,191,.05),0 0 60px -12px rgba(45,212,191,.45),
+      inset 0 0 34px -14px rgba(45,212,191,.5); z-index:3; padding:6px; }
+  .node-kicker { font-family:var(--f-mono); font-size:10px; letter-spacing:.28em;
+    color:var(--node); text-transform:uppercase; margin-bottom:6px; }
+  .node-title { font-size:clamp(19px,3.4vmin,28px); font-weight:600; line-height:1.05; }
+  .node-sub { font-family:var(--f-mono); font-size:11px; color:var(--muted); margin-top:7px; }
+  .indicator { position:absolute; transform:translate(-50%,-50%) scale(.9); opacity:0;
+    display:flex; align-items:center; gap:9px; padding:9px 13px; min-width:120px;
+    background:var(--chip); border:1px solid var(--chip-brd); border-radius:10px; z-index:2;
+    animation:pop .5s cubic-bezier(.2,.7,.2,1) forwards; animation-delay:var(--d,0s); }
+  @keyframes pop { to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
+  .dot { width:8px; height:8px; border-radius:50%; flex:none; background:var(--faint); }
+  .indicator[data-estado="activo"] .dot { background:var(--node); box-shadow:0 0 10px 1px rgba(45,212,191,.7); }
+  .indicator[data-estado="alerta"] .dot { background:var(--amber); box-shadow:0 0 10px 1px rgba(244,169,60,.7); }
+  .indicator[data-estado="inactivo"] .dot { background:var(--faint); }
+  .ind-txt { display:flex; flex-direction:column; line-height:1.25; }
+  .ind-main { font-size:15px; font-weight:600; }
+  .ind-meta { font-family:var(--f-mono); font-size:10.5px; color:var(--muted); }
+
+  /* ── Botón menú ── */
+  .menu-btn { position:fixed; top:20px; left:20px; z-index:30; display:inline-flex;
+    align-items:center; gap:10px; padding:11px 15px 11px 13px; background:var(--bg-2);
+    border:1px solid var(--chip-brd); border-radius:11px; color:var(--ink);
+    font-family:var(--f-mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    cursor:pointer; transition:border-color .2s; }
+  .menu-btn:hover { border-color:rgba(45,212,191,.5); }
+  .menu-btn .bars { display:grid; gap:3px; }
+  .menu-btn .bars span { width:17px; height:1.6px; background:var(--node); border-radius:2px; }
+  .menu-btn.flecha{ left:auto; padding:9px 15px; font-size:17px; font-weight:700; line-height:1.2; }
+  #btnAtras{ left:124px; } #btnAdelante{ left:174px; }
+  #btnHome{ left:224px; padding:9px 12px; display:inline-flex; align-items:center; color:var(--node); }
+  .menu-btn.flecha:disabled{ opacity:.35; cursor:default; }
+  .menu-btn.flecha:disabled:hover{ border-color:var(--chip-brd); }
+
+  /* ── Cajón ── */
+  .scrim { position:fixed; inset:0; background:rgba(4,10,15,.55); backdrop-filter:blur(2px);
+    opacity:0; visibility:hidden; transition:opacity .28s,visibility .28s; z-index:40; }
+  .drawer { position:fixed; top:0; left:0; height:100%; width:min(310px,84vw);
+    background:var(--drawer); border-right:1px solid var(--chip-brd);
+    transform:translateX(-102%); transition:transform .34s cubic-bezier(.5,.05,.2,1);
+    z-index:50; display:flex; flex-direction:column; padding:26px 20px; }
+  body.nav-open .scrim { opacity:1; visibility:visible; }
+  body.nav-open .drawer { transform:translateX(0); }
+  .brand { display:flex; align-items:center; gap:11px; padding-bottom:22px; margin-bottom:8px;
+    border-bottom:1px solid var(--line); }
+  .brand .glyph { width:30px; height:30px; flex:none; border-radius:8px; display:grid;
+    place-content:center; background:var(--node-soft); border:1px solid rgba(45,212,191,.5); }
+  .brand .glyph::after { content:""; width:9px; height:9px; border-radius:50%;
+    background:var(--node); box-shadow:0 0 10px 1px rgba(45,212,191,.7); }
+  .brand b { font-weight:600; font-size:15px; }
+  .brand small { display:block; font-family:var(--f-mono); font-size:10px; color:var(--muted);
+    letter-spacing:.16em; text-transform:uppercase; }
+  .nav-label { font-family:var(--f-mono); font-size:10px; letter-spacing:.24em;
+    text-transform:uppercase; color:var(--faint); margin:18px 8px 10px; }
+  .nav { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3px; }
+  .nav a { display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:9px;
+    color:var(--muted); text-decoration:none; font-size:14px; border:1px solid transparent;
+    transition:background .18s,color .18s,border-color .18s; cursor:pointer; }
+  .nav a .idx { font-family:var(--f-mono); font-size:11px; color:var(--faint); width:20px; }
+  .nav a:hover { background:var(--bg-2); color:var(--ink); }
+  .nav a.active { background:var(--node-soft); color:var(--ink); border-color:rgba(45,212,191,.35); }
+  .nav a.active .idx { color:var(--node); }
+  .drawer-foot { margin-top:auto; padding-top:18px; border-top:1px solid var(--line);
+    font-family:var(--f-mono); font-size:10.5px; color:var(--faint); }
+
+  /* ── Vista OC ── */
+  .oc-view { position:relative; z-index:1; display:none; max-width:1080px; margin:0 auto;
+    padding:84px 22px 60px; }
+  body.view-oc .oc-view { display:block; }
+
+  /* ── Vista Comercial ── */
+  .comercial-view{ position:relative; z-index:1; display:none; max-width:1080px; margin:0 auto; padding:84px 22px 60px; }
+  body.view-comercial .comercial-view{ display:block; }
+  .periodos{ display:flex; gap:4px; flex-wrap:wrap; margin:20px 0 12px; }
+  .periodo-label{ font-family:var(--f-display); font-weight:600; font-size:17px; color:var(--node);
+    margin:0 0 18px; letter-spacing:-.01em; }
+  .per{ font-family:var(--f-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--chip-brd); background:var(--bg-2);
+    color:var(--muted); cursor:pointer; }
+  .per.active{ color:var(--ink); border-color:rgba(45,212,191,.45); background:var(--node-soft); }
+  .per-sep{ font-family:var(--f-mono); font-size:11px; color:var(--faint); align-self:center; margin-left:6px; }
+  .per-sel{ font-family:var(--f-mono); font-size:11px; padding:8px 10px; border-radius:8px;
+    border:1px solid var(--chip-brd); background:var(--bg-2); color:var(--ink); color-scheme:dark; cursor:pointer; }
+  .per-sel:focus{ outline:none; border-color:rgba(45,212,191,.55); }
+  .rank-title{ font-family:var(--f-display); font-weight:600; font-size:20px; margin:28px 0 2px; letter-spacing:-.01em; }
+  .rank-sub{ color:var(--muted); font-size:13.5px; margin:0 0 14px; }
+  table.rank{ width:100%; border-collapse:collapse; background:var(--bg-2);
+    border:1px solid var(--chip-brd); border-radius:12px; overflow:hidden; }
+  table.rank th, table.rank td{ text-align:left; padding:13px 16px; border-bottom:1px solid var(--line); font-size:14px; }
+  table.rank th{ font-family:var(--f-mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--faint); font-weight:600; }
+  table.rank td.num, table.rank th.num{ text-align:right; font-variant-numeric:tabular-nums; font-family:var(--f-mono); }
+  table.rank tr:last-child td{ border-bottom:0; }
+  table.rank .pos{ color:var(--node); font-family:var(--f-mono); font-weight:600; width:34px; }
+  table.rank .vend{ font-weight:600; }
+  .rank-bar{ height:4px; border-radius:2px; background:var(--node); margin-top:7px; opacity:.65; }
+  .com-empty{ color:var(--muted); font-family:var(--f-mono); font-size:13px; padding:26px 0; }
+
+  /* ── Filtros de OC validadas ── */
+  .oc-filtros{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 16px; }
+  .oc-filtros[hidden]{ display:none; }
+  .oc-filtros input[type=text]{ flex:1; min-width:220px; max-width:380px; padding:9px 12px;
+    background:var(--bg-2); border:1px solid var(--line); border-radius:8px;
+    font:inherit; font-size:13px; color:var(--ink); }
+  .oc-filtros input[type=text]::placeholder{ color:var(--muted); }
+  .oc-filtros input[type=text]:focus, .oc-filtros select:focus{
+    outline:none; border-color:rgba(45,212,191,.55); }
+  .oc-filtros select{ padding:9px 10px; background:var(--bg-2);
+    border:1px solid var(--line); border-radius:8px; font:inherit; font-size:13px;
+    color:var(--ink); color-scheme:dark; }
+  .oc-filtros select option{ background:var(--bg-2); color:var(--ink); }
+  .oc-filtros .f-cnt{ font-family:var(--f-mono); font-size:11px; color:var(--muted); margin-left:auto; }
+  .oc-filtros .f-limpiar{ border:none; background:none; color:var(--muted); font-size:12px;
+    cursor:pointer; text-decoration:underline; padding:4px; }
+  .mes-sep{ display:flex; align-items:center; gap:10px; margin:22px 0 10px;
+    font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .mes-sep::after{ content:""; flex:1; height:1px; background:var(--line,#d8dee6); }
+  .mes-sep .m-cnt{ font-family:var(--f-mono); font-weight:400; letter-spacing:0; text-transform:none; }
+  .fecha-oc{ background:var(--bg-2); border:1px solid var(--line); border-radius:6px; color:var(--ink);
+    font:inherit; font-size:12px; padding:1px 5px; color-scheme:dark; vertical-align:middle; }
+  .fecha-oc:focus{ outline:none; border-color:rgba(45,212,191,.55); }
+  .c-aviso{ display:inline-block; margin:0 0 7px; padding:4px 10px; border-radius:7px;
+    background:rgba(244,169,60,.12); border:1px solid rgba(244,169,60,.5); color:#F4A93C; font-size:12px; }
+
+  /* ── Formulario de edición (OC validadas) ── */
+  .edit-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
+  .edit-grid label{ display:flex; flex-direction:column; gap:5px; font-family:var(--f-mono);
+    font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); }
+  .edit-grid input{ background:var(--chip); border:1px solid var(--chip-brd); border-radius:8px;
+    color:var(--ink); font-family:var(--f-body); font-size:14px; padding:8px 10px; }
+  .edit-grid input:focus{ outline:none; border-color:var(--node); }
+  .btn-editar{ background:transparent; border-color:var(--chip-brd); color:var(--muted); }
+  .btn-editar:hover{ border-color:rgba(45,212,191,.5); color:var(--ink); }
+
+  /* ── Vista Calendario ── */
+  .cal-view{ position:relative; z-index:1; display:none; max-width:1080px; margin:0 auto; padding:84px 22px 60px; }
+  body.view-calendario .cal-view{ display:block; }
+  .cal-nav{ display:flex; align-items:center; gap:12px; margin:18px 0; flex-wrap:wrap; }
+  .cal-nav button{ font-family:var(--f-mono); font-size:16px; width:38px; height:38px; border-radius:9px;
+    border:1px solid var(--chip-brd); background:var(--bg-2); color:var(--ink); cursor:pointer; }
+  .cal-nav button:hover{ border-color:rgba(45,212,191,.5); }
+  .cal-nav .mes{ font-family:var(--f-display); font-weight:600; font-size:22px; min-width:210px; text-transform:capitalize; }
+  .cal-nav .hoy{ width:auto; padding:0 14px; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .cal-dow{ font-family:var(--f-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--faint); text-align:center; padding:4px 0; }
+  .cal-cell{ min-height:92px; background:var(--bg-2); border:1px solid var(--chip-brd); border-radius:10px;
+    padding:7px 8px; display:flex; flex-direction:column; gap:4px; cursor:pointer; position:relative; }
+  .cal-cell.empty{ background:transparent; border-color:transparent; cursor:default; }
+  .cal-cell.fin{ background:rgba(244,169,60,.06); }
+  .cal-cell.hoy{ border-color:var(--node); box-shadow:inset 0 0 0 1px rgba(45,212,191,.4); }
+  .cal-cell .num{ font-family:var(--f-mono); font-size:12px; color:var(--muted); align-self:flex-end; }
+  .cal-cell.hoy .num{ color:var(--node); font-weight:600; }
+  .cal-events{ display:flex; flex-wrap:wrap; gap:3px; margin-top:auto; }
+  .ev{ display:inline-flex; align-items:center; gap:3px; background:var(--node-soft);
+    border:1px solid rgba(45,212,191,.4); border-radius:6px; padding:2px 5px; font-size:10.5px; color:var(--ink); max-width:100%; }
+  .ev .ico{ width:13px; height:13px; flex:none; }
+  .ev .cli{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:64px; }
+  .ev{ cursor:pointer; }
+  .ev.done{ opacity:.55; background:transparent; border-color:var(--line); }
+  .ev.done .cli{ text-decoration:line-through; color:var(--muted); }
+  .ev.done .ico{ stroke:var(--faint); }
+  .cal-cell .nota-dot{ position:absolute; top:7px; left:8px; width:7px; height:7px; border-radius:50%; background:var(--amber); }
+  #calTip{ position:fixed; z-index:120; background:var(--drawer); border:1px solid rgba(45,212,191,.5);
+    border-radius:10px; padding:10px 13px; font-size:12.5px; color:var(--ink); pointer-events:none;
+    opacity:0; transition:opacity .12s; max-width:270px; box-shadow:0 12px 30px -12px rgba(0,0,0,.6); }
+  #calTip.show{ opacity:1; }
+  #calTip .k{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); }
+  #calTip b{ color:var(--node); }
+  .cal-side{ margin-top:26px; display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:720px){ .cal-side{ grid-template-columns:1fr; } .cal-cell{ min-height:64px; } }
+  .cal-panel{ background:var(--bg-2); border:1px solid var(--chip-brd); border-radius:12px; padding:18px 20px; }
+  .cal-panel h3{ font-family:var(--f-display); font-weight:600; font-size:16px; margin:0 0 4px; }
+  .cal-panel .hint{ color:var(--muted); font-size:12.5px; margin:0 0 12px; }
+  .obs-item{ display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .obs-item:last-child{ border-bottom:0; }
+  .obs-item .badge{ flex:none; width:8px; height:8px; border-radius:50%; margin-top:6px; background:var(--amber); }
+  .obs-item .meta{ color:var(--muted); font-size:11.5px; font-family:var(--f-mono); }
+  .nota-item{ display:flex; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .nota-item:last-child{ border-bottom:0; }
+  .nota-item .del{ cursor:pointer; color:var(--faint); font-family:var(--f-mono); }
+  .nota-item .del:hover{ color:var(--red); }
+  .cal-empty{ color:var(--muted); font-family:var(--f-mono); font-size:12.5px; padding:8px 0; }
+  .oc-head { display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px 26px; margin-bottom:8px; }
+  .oc-head h1 { font-size:30px; font-weight:600; letter-spacing:-.02em; margin:0; }
+  .oc-head .sub { font-family:var(--f-mono); font-size:12px; color:var(--muted); }
+  .stats { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0 26px; }
+  .stats[hidden]{ display:none; }
+  .stat { background:var(--chip); border:1px solid var(--chip-brd); border-radius:10px;
+    padding:12px 16px; min-width:130px; }
+  .stat .k { font-family:var(--f-mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); }
+  .stat .v { font-size:22px; font-weight:600; margin-top:3px; }
+  .stat.next .v { color:var(--node); }
+  .stat.total .v { color:var(--node); }
+
+  .tabs { display:flex; gap:4px; margin-bottom:16px; }
+  .tab { font-family:var(--f-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--chip-brd); background:var(--bg-2);
+    color:var(--muted); cursor:pointer; }
+  .tab.active { color:var(--ink); border-color:rgba(45,212,191,.45); background:var(--node-soft); }
+
+  .card { background:var(--bg-2); border:1px solid var(--chip-brd); border-radius:12px;
+    padding:16px 18px; margin-bottom:12px; display:grid;
+    grid-template-columns:12px 1.4fr 1fr auto; gap:14px; align-items:center; }
+  .card .cdot { width:10px; height:10px; border-radius:50%; align-self:start; margin-top:5px; }
+  .cdot.alta { background:var(--node); box-shadow:0 0 10px 1px rgba(45,212,191,.6); }
+  .cdot.media { background:var(--amber); box-shadow:0 0 10px 1px rgba(244,169,60,.6); }
+  .cdot.baja,.cdot.no_encontrado { background:var(--red); box-shadow:0 0 10px 1px rgba(244,106,106,.5); }
+  .c-empresa { font-size:16px; font-weight:600; }
+  .c-sub { font-family:var(--f-mono); font-size:11px; color:var(--muted); margin-top:3px; line-height:1.5; }
+  .vend-sel{ background:var(--chip); border:1px solid var(--chip-brd); border-radius:6px;
+    color:var(--ink); font-family:var(--f-mono); font-size:11px; padding:2px 6px; max-width:210px; }
+  .vend-sel:focus{ outline:none; border-color:var(--node); }
+  .c-flags { margin-top:6px; display:flex; flex-wrap:wrap; gap:5px; }
+  .flag { font-family:var(--f-mono); font-size:9.5px; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--amber); border:1px solid rgba(244,169,60,.4); border-radius:4px; padding:2px 6px; }
+  .c-monto { display:flex; flex-direction:column; gap:5px; }
+  .c-monto label { font-family:var(--f-mono); font-size:9.5px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--faint); }
+  .monto-in { display:flex; align-items:center; gap:6px; }
+  .monto-in .cur { font-family:var(--f-mono); font-size:12px; color:var(--muted); }
+  .monto-in input { width:130px; background:var(--chip); border:1px solid var(--chip-brd);
+    border-radius:8px; color:var(--ink); font-family:var(--f-mono); font-size:15px; padding:8px 10px; }
+  .monto-in input:focus { outline:none; border-color:var(--node); }
+  .c-orig { font-family:var(--f-mono); font-size:10.5px; color:var(--faint); }
+  .acts { display:flex; flex-direction:column; gap:7px; }
+  .btn { font-family:var(--f-mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    padding:9px 14px; border-radius:8px; cursor:pointer; border:1px solid transparent; white-space:nowrap; }
+  .btn-abrir { background:transparent; border-color:var(--chip-brd); color:var(--muted); }
+  .btn-abrir:hover { border-color:rgba(45,212,191,.5); color:var(--ink); }
+  .btn-ok { background:var(--node-soft); border-color:rgba(45,212,191,.5); color:var(--node); }
+  .btn-ok:hover { background:rgba(45,212,191,.24); }
+  .btn-no { background:transparent; border-color:rgba(244,106,106,.35); color:var(--red); }
+  .btn-no:hover { background:rgba(244,106,106,.12); }
+  /* mover-a-pestaña: animación de salida + contadores vivos */
+  .card { overflow:hidden; transition:opacity .35s ease, transform .35s ease, max-height .4s ease, margin .35s ease, padding .35s ease, border-color .35s ease; }
+  .card.leaving { opacity:0; transform:translateX(52px); max-height:0 !important;
+    margin-top:0; margin-bottom:0; padding-top:0; padding-bottom:0; border-color:transparent; }
+  .tab .cnt { margin-left:7px; font-size:11px; opacity:.7; }
+  .tab.active .cnt { color:var(--node); opacity:1; }
+  .tab.bump { animation:tabBump .55s cubic-bezier(.3,.8,.3,1); }
+  @keyframes tabBump { 0%{transform:scale(1);} 25%{transform:scale(1.14); border-color:rgba(45,212,191,.7);} 100%{transform:scale(1);} }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .oc-code { font-family:var(--f-mono); font-size:13px; color:var(--node); font-weight:600; }
+  .empty { color:var(--muted); font-family:var(--f-mono); font-size:13px; padding:30px 0; }
+
+  /* ── Toast ── */
+  #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-2); border:1px solid rgba(45,212,191,.5); border-radius:10px;
+    padding:13px 20px; font-size:13.5px; color:var(--ink); z-index:99; opacity:0;
+    transition:opacity .25s,transform .25s; pointer-events:none; max-width:88vw; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.err { border-color:rgba(244,106,106,.6); }
+
+  :focus-visible { outline:2px solid var(--focus); outline-offset:3px; border-radius:6px; }
+  @media (max-width:720px){ .card{ grid-template-columns:12px 1fr; } .c-monto,.acts{ grid-column:2; } }
+</style>
+</head>
+<body class="view-panel">
+
+<button class="menu-btn" id="menuBtn" aria-label="Abrir navegación" aria-expanded="false">
+  <span class="bars" aria-hidden="true"><span></span><span></span><span></span></span> Menú
+</button>
+<button class="menu-btn flecha" id="btnAtras" title="Atrás" disabled>‹</button>
+<button class="menu-btn flecha" id="btnAdelante" title="Adelante" disabled>›</button>
+<button class="menu-btn" id="btnHome" title="Inicio (Panel principal)" onclick="irAVista('panel')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h4v-5h6v5h4v-9"/></svg></button>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Navegación principal">
+  <div class="brand">
+    <span class="glyph" aria-hidden="true"></span>
+    <span><b>Ariana</b><small>Oficina Técnica</small></span>
+  </div>
+  <p class="nav-label">Pestañas</p>
+  <ul class="nav" id="nav">
+    <li><a data-view="panel" class="active"><span class="idx">01</span>Panel principal</a></li>
+    <li><a data-view="calendario"><span class="idx">02</span>Calendario</a></li>
+    <li><a data-view="oc"><span class="idx">03</span>Órdenes de compra (OC)</a></li>
+    <li><a data-view="fabricacion"><span class="idx">04</span>Órdenes de fabricación</a></li>
+    <li><a data-view="comercial"><span class="idx">05</span>Comercial</a></li>
+    <li><a data-view="clientes"><span class="idx">06</span>Clientes</a></li>
+  </ul>
+  <div class="drawer-foot" id="drawerFoot">v1 · local</div>
+</aside>
+
+<!-- Panel radial -->
+<main class="stage" id="stage" aria-live="polite">
+  <svg class="wires" id="wires" aria-hidden="true"></svg>
+  <div class="node" id="node">
+    <span class="node-kicker">Asistente</span>
+    <span class="node-title">Ariana</span>
+    <span class="node-sub" id="nodeSub">cargando…</span>
+  </div>
+</main>
+
+<!-- Vista OC -->
+<section class="oc-view" id="ocView">
+  <div class="oc-head">
+    <h1>Órdenes de compra</h1>
+    <span class="sub">casilla orders@example.com · validación humana</span>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div style="margin:0 0 18px;">
+    <button class="btn btn-ok" id="btnActualizar">🔄 Actualizar casilla</button>
+    <button class="btn btn-abrir" id="btnIngestar">⬇ Descargar pendientes a revisión</button>
+    <span id="ingestaMsg" style="font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:10px;"></span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-estado="pendiente">Pendientes <span class="cnt" id="cnt-pendiente">·</span></div>
+    <div class="tab" data-estado="aprobado">Validadas <span class="cnt" id="cnt-aprobado">·</span></div>
+    <div class="tab" data-estado="rechazado">Rechazadas <span class="cnt" id="cnt-rechazado">·</span></div>
+  </div>
+  <div class="oc-filtros" id="ocFiltros" hidden>
+    <input type="text" id="fTexto" placeholder="🔎 Buscar cliente, N° de OC o código…">
+    <select id="fVendedor"><option value="">Todos los vendedores</option></select>
+    <select id="fMes"><option value="">Todos los meses</option></select>
+    <button class="f-limpiar" id="fLimpiar" hidden>limpiar</button>
+    <span class="f-cnt" id="fCnt"></span>
+  </div>
+  <div class="stats" id="ocValStats" hidden></div>
+  <div id="lista"></div>
+</section>
+
+<!-- Vista Comercial -->
+<section class="comercial-view" id="comercialView">
+  <div class="oc-head">
+    <h1>Comercial</h1>
+    <span class="sub">se alimenta de las OC validadas · casilla oc@</span>
+  </div>
+  <div class="periodos" id="periodos">
+    <div class="per" data-p="hoy">Hoy</div>
+    <div class="per active" data-p="mes">Este mes</div>
+    <div class="per" data-p="trimestre">Trimestre</div>
+    <div class="per" data-p="anio">Año</div>
+    <div class="per" data-p="todo">Todo</div>
+    <span class="per-sep">·  buscar:</span>
+    <select id="selMes" class="per-sel"><option value="">Mes puntual…</option></select>
+    <select id="selTrim" class="per-sel"><option value="">Trimestre puntual…</option></select>
+  </div>
+  <div class="periodo-label" id="periodoLabel"></div>
+  <div class="stats" id="comStats"></div>
+
+  <div class="rank-title">Ranking de vendedores</div>
+  <p class="rank-sub">Por dinero recaudado en OC validadas.</p>
+  <div style="overflow-x:auto;">
+    <table class="rank" id="rankTable"></table>
+  </div>
+</section>
+
+<!-- Vista Calendario -->
+<section class="cal-view" id="calView">
+  <div class="oc-head">
+    <h1>Calendario</h1>
+    <span class="sub">fechas de entrega de las OC validadas</span>
+  </div>
+  <div class="cal-nav">
+    <button id="calPrev" aria-label="Mes anterior">‹</button>
+    <div class="mes" id="calMes">—</div>
+    <button id="calNext" aria-label="Mes siguiente">›</button>
+    <button class="hoy" id="calHoy">Hoy</button>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="cal-side">
+    <div class="cal-panel">
+      <h3>⚠️ Observaciones de Ariana</h3>
+      <p class="hint">Discrepancias detectadas automáticamente para revisar y corregir a mano.</p>
+      <div id="calObs"></div>
+    </div>
+    <div class="cal-panel">
+      <h3>📝 Notas manuales</h3>
+      <p class="hint">Clic en un día del calendario para agregar una nota.</p>
+      <div id="calNotas"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Vista Órdenes de fabricación -->
+<section class="fab-view" id="fabView">
+  <a class="btn-gaspi" href="/gaspi/" target="_blank" rel="noopener">GASPI ↗</a>
+  <div class="oc-head">
+    <h1>Órdenes de fabricación</h1>
+    <span class="sub">OC con Fabricación: Sí · Ingeniería decide si aplica</span>
+  </div>
+  <div class="tabs" id="fabTabs">
+    <div class="tab active" data-fab="pendiente">Pendientes <span class="cnt" id="fcnt-pendiente">·</span></div>
+    <div class="tab" data-fab="aplica">Aplica <span class="cnt" id="fcnt-aplica">·</span></div>
+    <div class="tab" data-fab="no_aplica">No aplica <span class="cnt" id="fcnt-no_aplica">·</span></div>
+  </div>
+  <div id="fabLista"></div>
+</section>
+
+<!-- Vista Clientes -->
+<section class="cli-view" id="cliView">
+  <div class="oc-head">
+    <h1>Clientes</h1>
+    <span class="sub">ficha comercial · se alimenta de las OC validadas + memoria de Ariana</span>
+  </div>
+  <div class="stats" id="cliStats"></div>
+  <div style="overflow-x:auto;">
+    <table class="rank" id="cliTable"></table>
+  </div>
+  <div class="cli-notas">
+    <h3>📝 Requisitos y gustos (memoria de Ariana)</h3>
+    <p class="hint">Notas cualitativas aprendidas de los mails. Se editan en <span style="font-family:var(--f-mono)">memoria\clientes_notas.md</span>.</p>
+    <div id="cliNotas"></div>
+  </div>
+</section>
+
+<div id="calTip"></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const stage=$("#stage"), wires=$("#wires"), node=$("#node"), nodeSub=$("#nodeSub");
+let chips=[], estadoActual="pendiente";
+
+/* ── Toast ── */
+let tt;
+function toast(msg, err=false){
+  const t=$("#toast"); t.textContent=msg; t.className=err?"err show":"show";
+  clearTimeout(tt); tt=setTimeout(()=>t.classList.remove("show"),3600);
+}
+
+/* ── Navegación de vistas ── */
+$("#nav").addEventListener("click",e=>{
+  const a=e.target.closest("a"); if(!a) return;
+  irAVista(a.dataset.view);
+  cerrarNav();
+});
+
+/* ── Cajón ── */
+const menuBtn=$("#menuBtn"), scrim=$("#scrim");
+function abrirNav(){ document.body.classList.add("nav-open"); menuBtn.setAttribute("aria-expanded","true"); }
+function cerrarNav(){ document.body.classList.remove("nav-open"); menuBtn.setAttribute("aria-expanded","false"); }
+menuBtn.addEventListener("click",()=>document.body.classList.contains("nav-open")?cerrarNav():abrirNav());
+scrim.addEventListener("click",cerrarNav);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") cerrarNav(); });
+
+/* ── Resumen (alimenta radial + stats) ── */
+async function cargarResumen(){
+  try{
+    const r=await (await fetch("/api/resumen")).json();
+    renderRadial(r);
+    renderStats(r);
+    pintarConteos(r);
+  }catch(e){ nodeSub.textContent="sin conexión"; }
+}
+function pintarConteos(r){
+  const set=(id,n)=>{ const e=document.getElementById(id); if(e) e.textContent=n; };
+  set("cnt-pendiente", r.pendientes);
+  set("cnt-aprobado", r.aprobadas);
+  set("cnt-rechazado", r.rechazadas);
+}
+/* Anima la salida de la tarjeta y resalta la pestaña destino (sin recargar) */
+function animarSalida(el, destino){
+  el.style.maxHeight = el.offsetHeight + "px";
+  requestAnimationFrame(()=>el.classList.add("leaving"));
+  setTimeout(()=>el.remove(), 430);
+  const tab=document.querySelector('.tab[data-estado="'+destino+'"]');
+  if(tab){ tab.classList.remove("bump"); void tab.offsetWidth; tab.classList.add("bump"); }
+  setTimeout(()=>{ const c=$("#lista"); if(c && !c.querySelector(".card"))
+    c.innerHTML=`<div class="empty">No hay OC en estado "${estadoActual}".</div>`; }, 460);
+}
+function renderStats(r){
+  $("#stats").innerHTML = `
+    <div class="stat"><div class="k">Pendientes</div><div class="v">${r.pendientes}</div></div>
+    <div class="stat"><div class="k">Validadas</div><div class="v">${r.aprobadas}</div></div>
+    <div class="stat"><div class="k">Rechazadas</div><div class="v">${r.rechazadas}</div></div>`;
+}
+function fmt(n){ return new Intl.NumberFormat("es-AR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n); }
+
+/* ── Comercial ── */
+let periodoActual="mes";
+let pAnio=null, pMes=null, pQ=null;   // null = relativo a hoy (botones rápidos)
+$("#periodos").addEventListener("click",e=>{
+  const p=e.target.closest(".per"); if(!p) return;
+  document.querySelectorAll("#periodos .per").forEach(x=>x.classList.toggle("active",x===p));
+  periodoActual=p.dataset.p; pAnio=pMes=pQ=null;         // volver al período relativo a hoy
+  $("#selMes").value=""; $("#selTrim").value="";
+  cargarComercial();
+});
+// Buscador: mes puntual (histórico)
+$("#selMes").addEventListener("change",e=>{
+  const v=e.target.value; if(!v) return;
+  $("#selTrim").value=""; document.querySelectorAll("#periodos .per").forEach(x=>x.classList.remove("active"));
+  const [a,m]=v.split("-").map(Number);
+  periodoActual="mes"; pAnio=a; pMes=m; pQ=null; cargarComercial();
+});
+// Buscador: trimestre puntual (histórico)
+$("#selTrim").addEventListener("change",e=>{
+  const v=e.target.value; if(!v) return;
+  $("#selMes").value=""; document.querySelectorAll("#periodos .per").forEach(x=>x.classList.remove("active"));
+  const [a,q]=v.split("-").map(Number);
+  periodoActual="trimestre"; pAnio=a; pQ=q; pMes=null; cargarComercial();
+});
+const TRIM_MESES=["Ene–Mar","Abr–Jun","Jul–Sep","Oct–Dic"];
+function poblarSelectoresPeriodo(meses){
+  if(!meses) return;
+  const sm=$("#selMes"), vm=sm.value;
+  sm.innerHTML=`<option value="">Mes puntual…</option>`+
+    meses.map(ym=>{const [a,m]=ym.split("-");return `<option value="${ym}">${mesTitulo(ym)}</option>`;}).join("");
+  if([...sm.options].some(o=>o.value===vm)) sm.value=vm;
+  // trimestres distintos presentes (año-Q), más nuevo primero
+  const st=$("#selTrim"), vt=st.value;
+  const trims=[...new Set(meses.map(ym=>{const [a,m]=ym.split("-").map(Number);return `${a}-${Math.floor((m-1)/3)+1}`;}))]
+    .sort().reverse();
+  st.innerHTML=`<option value="">Trimestre puntual…</option>`+
+    trims.map(t=>{const [a,q]=t.split("-").map(Number);return `<option value="${t}">${q}º trim ${a} · ${TRIM_MESES[q-1]}</option>`;}).join("");
+  if([...st.options].some(o=>o.value===vt)) st.value=vt;
+}
+/* Texto del período que se está analizando (ej. trimestre -> "Julio–Septiembre 2026"). */
+function textoPeriodo(){
+  const d=new Date();
+  const a = pAnio || d.getFullYear();
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  if(periodoActual==="hoy")  return `Hoy · ${d.getDate()} de ${MESES_L[d.getMonth()]} de ${d.getFullYear()}`;
+  if(periodoActual==="mes"){ const m=(pMes!=null?pMes-1:d.getMonth()); return `${cap(MESES_L[m])} ${a}`; }
+  if(periodoActual==="trimestre"){ const q=(pQ!=null?pQ:Math.floor(d.getMonth()/3)+1), ini=(q-1)*3;
+    return `${cap(MESES_L[ini])}–${cap(MESES_L[ini+2])} ${a} · ${q}º trimestre`; }
+  if(periodoActual==="anio") return `Año ${a}`;
+  return "Histórico completo";
+}
+async function cargarComercial(){
+  const tab=$("#rankTable");
+  $("#periodoLabel").textContent=textoPeriodo();
+  let url="/api/comercial?periodo="+periodoActual;
+  if(pAnio) url+="&anio="+pAnio;
+  if(pMes!=null) url+="&mes="+pMes;
+  if(pQ!=null) url+="&q="+pQ;
+  try{
+    const r=await (await fetch(url)).json();
+    poblarSelectoresPeriodo(r.meses_disponibles);
+    $("#comStats").innerHTML=`
+      <div class="stat"><div class="k">OC validadas</div><div class="v">${r.cantidad}</div></div>
+      <div class="stat total"><div class="k">USD recaudado</div><div class="v">${fmt(r.total_usd)}</div></div>
+      <div class="stat"><div class="k">Ticket promedio</div><div class="v">${fmt(r.ticket_promedio)}</div></div>
+      <div class="stat"><div class="k">Vendedores</div><div class="v">${r.ranking.length}</div></div>`;
+    if(!r.ranking.length){
+      tab.innerHTML=`<tbody><tr><td class="com-empty">No hay OC validadas en este período.</td></tr></tbody>`;
+      return;
+    }
+    const max=r.ranking[0].total||1;
+    tab.innerHTML=`<thead><tr>
+        <th class="pos">#</th><th>Vendedor</th>
+        <th class="num">USD recaudado</th><th class="num">OC</th><th class="num">Ticket prom.</th>
+      </tr></thead><tbody>`+
+      r.ranking.map((v,i)=>`<tr>
+        <td class="pos">${i+1}</td>
+        <td class="vend">${v.vendedor}<div class="rank-bar" style="width:${Math.max(6,100*v.total/max)}%"></div></td>
+        <td class="num">${fmt(v.total)}</td>
+        <td class="num">${v.cantidad}</td>
+        <td class="num">${fmt(v.ticket)}</td>
+      </tr>`).join("")+`</tbody>`;
+  }catch(e){ tab.innerHTML=`<tbody><tr><td class="com-empty">Error de conexión.</td></tr></tbody>`; }
+}
+
+/* ── Calendario ── */
+let calAnio=null, calMes=null; // mes 1-12
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DOW=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const ICONO_ENTREGA=`<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="var(--node)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18.5" r="1.4"/><circle cx="17.5" cy="18.5" r="1.4"/></svg>`;
+
+$("#calPrev").onclick=()=>{ calMes--; if(calMes<1){calMes=12;calAnio--;} cargarCalendario(); };
+$("#calNext").onclick=()=>{ calMes++; if(calMes>12){calMes=1;calAnio++;} cargarCalendario(); };
+$("#calHoy").onclick=()=>{ const d=new Date(); calAnio=d.getFullYear(); calMes=d.getMonth()+1; cargarCalendario(); };
+
+async function cargarCalendario(){
+  if(!calAnio){ const d=new Date(); calAnio=d.getFullYear(); calMes=d.getMonth()+1; }
+  $("#calMes").textContent = MESES[calMes-1]+" "+calAnio;
+  let data;
+  try{ data=await (await fetch(`/api/calendario?anio=${calAnio}&mes=${calMes}`)).json(); }
+  catch(e){ $("#calGrid").innerHTML=`<div class="cal-empty">Error de conexión.</div>`; return; }
+  renderCalendario(data);
+}
+
+function renderCalendario(data){
+  const grid=$("#calGrid");
+  const evByDay={}, notasByDay={};
+  data.eventos.forEach(e=>{ (evByDay[e.dia]=evByDay[e.dia]||[]).push(e); });
+  (data.notas||[]).forEach(n=>{ const d=parseInt(n.fecha.slice(8,10)); (notasByDay[d]=notasByDay[d]||[]).push(n); });
+
+  const primero=new Date(calAnio, calMes-1, 1);
+  const offset=(primero.getDay()+6)%7;               // lunes=0
+  const diasMes=new Date(calAnio, calMes, 0).getDate();
+  const hoy=data.hoy;
+
+  let html=DOW.map(d=>`<div class="cal-dow">${d}</div>`).join("");
+  for(let i=0;i<offset;i++) html+=`<div class="cal-cell empty"></div>`;
+  for(let dia=1; dia<=diasMes; dia++){
+    const iso=`${calAnio}-${String(calMes).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+    const dow=new Date(calAnio,calMes-1,dia).getDay();
+    const fin=(dow===0||dow===6)?"fin":"";
+    const esHoy=(iso===hoy)?"hoy":"";
+    const evs=evByDay[dia]||[], notas=notasByDay[dia]||[];
+    const evHtml=evs.map(e=>{
+      const done=e.terminada?" done":"", chk=e.terminada?"✓ ":"";
+      return `<span class="ev${done}" data-tip='${encodeURIComponent(JSON.stringify(e))}'>${ICONO_ENTREGA}<span class="cli">${chk}${esc(e.cliente||"")}</span></span>`;
+    }).join("");
+    html+=`<div class="cal-cell ${fin} ${esHoy}" data-iso="${iso}" data-dia="${dia}">
+      ${notas.length?`<span class="nota-dot"></span>`:""}
+      <span class="num">${dia}</span>
+      <div class="cal-events">${evHtml}</div></div>`;
+  }
+  grid.innerHTML=html;
+
+  const tip=$("#calTip");
+  function moverTip(ev){
+    const pad=14; let x=ev.clientX+pad, y=ev.clientY+pad;
+    const r=tip.getBoundingClientRect();
+    if(x+r.width>window.innerWidth) x=ev.clientX-r.width-pad;
+    if(y+r.height>window.innerHeight) y=ev.clientY-r.height-pad;
+    tip.style.left=x+"px"; tip.style.top=y+"px";
+  }
+  grid.querySelectorAll(".ev").forEach(el=>{
+    el.addEventListener("mouseenter",ev=>{
+      const e=JSON.parse(decodeURIComponent(el.dataset.tip));
+      const estado = e.terminada
+        ? `<div style="margin-top:8px;color:var(--node)">✓ Entrega terminada · clic para reabrir</div>`
+        : `<div style="margin-top:8px;color:var(--faint)">Clic para marcar como terminada</div>`;
+      tip.innerHTML=`<div><span class="k">Cliente</span><br><b>${esc(e.cliente||"—")}</b></div>
+        <div style="margin-top:6px;"><span class="k">Vendedor</span><br>${esc(e.vendedor||"—")}</div>
+        <div style="margin-top:6px;"><span class="k">OC</span> ${e.oc||"—"} · N° ${esc(e.oc_numero||"—")}${e.monto!=null?" · USD "+fmt(e.monto):""}</div>
+        <div style="margin-top:6px;"><span class="k">Entrega</span> ${esc(e.fecha_entrega_txt||"")}</div>${estado}`;
+      tip.classList.add("show"); moverTip(ev);
+    });
+    el.addEventListener("mousemove",moverTip);
+    el.addEventListener("mouseleave",()=>tip.classList.remove("show"));
+    el.addEventListener("click",async ev=>{
+      ev.stopPropagation();
+      const e=JSON.parse(decodeURIComponent(el.dataset.tip));
+      const accion = e.terminada ? "reabrir (marcar como pendiente)" : "marcar como TERMINADA";
+      if(!confirm(`Entrega de ${e.cliente} (${e.oc||""})\n¿${accion}?`)) return;
+      const res=await post(`/api/oc/${e.id}/entrega`,{terminada: !e.terminada});
+      if(res.ok){ tip.classList.remove("show");
+        toast(e.terminada?"Entrega reabierta":"✓ Entrega marcada como terminada");
+        cargarCalendario(); cargarResumen(); }
+    });
+  });
+
+  grid.querySelectorAll(".cal-cell[data-iso]").forEach(c=>{
+    c.addEventListener("click",e=>{
+      if(e.target.closest(".ev")) return;
+      const txt=prompt(`Nota para el ${c.dataset.dia}/${calMes}/${calAnio}:`);
+      if(txt && txt.trim()) post("/api/calendario/nota",{fecha:c.dataset.iso,texto:txt.trim()})
+        .then(r=>{ if(r.ok){ toast("Nota agregada"); cargarCalendario(); } });
+    });
+  });
+
+  const obs=$("#calObs");
+  obs.innerHTML = !data.observaciones.length
+    ? `<div class="cal-empty">Sin observaciones este mes 👌</div>`
+    : data.observaciones.map(o=>`<div class="obs-item"><span class="badge"></span><div>
+        <div class="txt">${esc(o.texto)}</div>
+        <div class="meta">${o.oc||""}${o.cliente?" · "+esc(o.cliente):""}${o.vendedor?" · "+esc(o.vendedor):""}</div>
+      </div></div>`).join("");
+
+  const nc=$("#calNotas");
+  nc.innerHTML = !data.notas.length
+    ? `<div class="cal-empty">Sin notas este mes.</div>`
+    : data.notas.map(n=>`<div class="nota-item"><div>
+        <b>${n.fecha.slice(8,10)}/${n.fecha.slice(5,7)}</b> · ${esc(n.texto)}</div>
+        <span class="del" data-id="${n.id}">✕</span></div>`).join("");
+  nc.querySelectorAll(".del").forEach(d=>d.onclick=()=>
+    post(`/api/calendario/nota/${d.dataset.id}/eliminar`).then(r=>{ if(r.ok){ toast("Nota eliminada"); cargarCalendario(); } }));
+}
+
+/* ── Radial ── */
+const fechaCorta = iso => { const p=iso.split("-"); return p[2]+"/"+p[1]; };
+function renderRadial(r){
+  const px = r.proximas_entregas||[];
+  nodeSub.textContent = px.length
+    ? "próxima entrega · "+fechaCorta(px[0].fecha)
+    : (r.pendientes+" pendientes de revisar");
+  const corto = s => { s=s||""; return s.length>18 ? s.slice(0,17)+"…" : s; };
+  const datos=[{txt:r.pendientes, meta:"pendientes de revisar", estado:r.pendientes?"alerta":"inactivo"}];
+  px.slice(0,5).forEach(e=>{
+    datos.push({
+      txt: corto(e.cliente),
+      meta: "entrega "+fechaCorta(e.fecha)+" · "+(e.dias===0?"hoy":"en "+e.dias+"d"),
+      estado: e.dias<=2 ? "alerta" : "activo",
+    });
+  });
+  chips.forEach(c=>c.remove()); chips=[];
+  wires.querySelectorAll(".wire").forEach(w=>w.remove());
+  datos.forEach((n,i)=>{
+    const el=document.createElement("div"); el.className="indicator";
+    el.dataset.estado=n.estado; el.style.setProperty("--d",(0.3+i*0.07)+"s");
+    el.innerHTML=`<span class="dot"></span><span class="ind-txt"><span class="ind-main">${n.txt}</span><span class="ind-meta">${n.meta}</span></span>`;
+    stage.appendChild(el); chips.push(el);
+  });
+  layout();
+}
+function layout(){
+  const W=stage.clientWidth,H=stage.clientHeight,cx=W/2,cy=H/2,nodeR=node.offsetWidth/2;
+  const radius=Math.min(Math.min(W,H)*0.40,Math.min(W,H)/2-90);
+  const n=chips.length,start=-Math.PI/2;
+  chips.forEach((el,i)=>{
+    const ang=start+(i/n)*Math.PI*2;
+    const x=cx+Math.cos(ang)*radius,y=cy+Math.sin(ang)*radius;
+    el.style.left=x+"px"; el.style.top=y+"px";
+    const ox=cx+Math.cos(ang)*(nodeR+6),oy=cy+Math.sin(ang)*(nodeR+6);
+    const chipHalf=Math.min(el.offsetWidth,el.offsetHeight)/2+8;
+    const tx=x-Math.cos(ang)*chipHalf,ty=y-Math.sin(ang)*chipHalf;
+    const len=Math.hypot(tx-ox,ty-oy);
+    const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("class","wire");
+    line.setAttribute("x1",ox); line.setAttribute("y1",oy);
+    line.setAttribute("x2",tx); line.setAttribute("y2",ty);
+    line.style.setProperty("--len",len); line.style.setProperty("--d",(i*0.06)+"s");
+    wires.appendChild(line);
+  });
+}
+window.addEventListener("resize",()=>{ if(!document.body.classList.contains("view-oc")){ wires.querySelectorAll(".wire").forEach(w=>w.remove()); layout(); }});
+
+/* ── Lista de OC ── */
+$(".tabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(!t) return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===t));
+  estadoActual=t.dataset.estado; cargarLista();
+});
+
+let LISTA_ROWS=[];
+async function cargarLista(){
+  const cont=$("#lista"); cont.innerHTML=`<div class="empty">Cargando…</div>`;
+  await cargarVendedores();
+  const conFiltros = estadoActual==="aprobado";
+  $("#ocFiltros").hidden = !conFiltros;
+  $("#ocValStats").hidden = !conFiltros;
+  try{
+    LISTA_ROWS=await (await fetch("/api/oc?estado="+estadoActual)).json();
+    if(conFiltros){ armarFiltros(); renderValidadas(); return; }
+    if(!LISTA_ROWS.length){ cont.innerHTML=`<div class="empty">No hay OC en estado "${estadoActual}".</div>`; return; }
+    cont.innerHTML="";
+    LISTA_ROWS.forEach(r=>cont.appendChild(tarjeta(r)));
+  }catch(e){ cont.innerHTML=`<div class="empty">Error de conexión.</div>`; }
+}
+
+/* ── Filtros y agrupación por mes (solo Validadas) ── */
+const MESES_L=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function mesDe(r){ return (r.fecha_oc||r.received||"").slice(0,7); }    // usa la fecha de OC (editable)
+function mesTitulo(ym){ const [a,m]=ym.split("-"); return (MESES_L[parseInt(m)-1]||ym)+" "+a; }
+/* El backend ya resuelve el nombre del vendedor (incluye reasignaciones como Erik->Diego). */
+function vendNombre(r){ return r.vendedor||r.sender||""; }
+/* Monto efectivo de una OC validada (el corregido si existe). */
+function montoDe(r){ return r.monto_final!=null ? +r.monto_final : (r.monto!=null ? +r.monto : 0); }
+
+function armarFiltros(){
+  const sv=$("#fVendedor"), guardadoV=sv.value;
+  const nombres=[...new Set(LISTA_ROWS.map(vendNombre).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  sv.innerHTML=`<option value="">Todos los vendedores</option>`+
+    nombres.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  if(nombres.includes(guardadoV)) sv.value=guardadoV;
+  // meses presentes, del más nuevo al más viejo
+  const sm=$("#fMes"), guardadoM=sm.value;
+  const meses=[...new Set(LISTA_ROWS.map(mesDe).filter(Boolean))].sort().reverse();
+  sm.innerHTML=`<option value="">Todos los meses</option>`+
+    meses.map(ym=>`<option value="${ym}">${mesTitulo(ym)}</option>`).join("");
+  if(meses.includes(guardadoM)) sm.value=guardadoM;
+}
+
+function renderValidadas(){
+  const cont=$("#lista");
+  const q=($("#fTexto").value||"").trim().toLowerCase();
+  const fv=$("#fVendedor").value, fm=$("#fMes").value;
+  const hayFiltro=!!(q||fv||fm);
+  $("#fLimpiar").hidden=!hayFiltro;
+  const rows=LISTA_ROWS.filter(r=>{
+    if(fv && vendNombre(r)!==fv) return false;
+    if(fm && mesDe(r)!==fm) return false;
+    if(q){
+      const pajar=[r.empresa,r.oc_numero,r.oc_codigo,r.subject,r.vendedor].join(" ").toLowerCase();
+      if(!pajar.includes(q)) return false;
+    }
+    return true;
+  });
+  $("#fCnt").textContent = hayFiltro ? `${rows.length} de ${LISTA_ROWS.length}` : `${LISTA_ROWS.length} OC`;
+  pintarStatsValidadas(rows);
+  if(!rows.length){
+    cont.innerHTML=`<div class="empty">${LISTA_ROWS.length?"Ninguna OC validada coincide con la búsqueda.":"No hay OC en estado \"aprobado\"."}</div>`;
+    return;
+  }
+  cont.innerHTML="";
+  let mesAbierto=null;
+  rows.forEach(r=>{
+    const ym=mesDe(r);
+    if(ym!==mesAbierto){
+      mesAbierto=ym;
+      const cant=rows.filter(x=>mesDe(x)===ym).length;
+      const sep=document.createElement("div"); sep.className="mes-sep";
+      sep.innerHTML=`${mesTitulo(ym)} <span class="m-cnt">· ${cant} OC</span>`;
+      cont.appendChild(sep);
+    }
+    cont.appendChild(tarjeta(r));
+  });
+}
+/* Resumen (mismas métricas que Comercial) del conjunto filtrado de Validadas. */
+function pintarStatsValidadas(rows){
+  const cont=$("#ocValStats"); if(!cont) return;
+  cont.hidden=false;
+  const total=rows.reduce((s,r)=>s+montoDe(r),0);
+  const cant=rows.length;
+  const ticket=cant?total/cant:0;
+  const vend=new Set(rows.map(vendNombre).filter(Boolean)).size;
+  cont.innerHTML=`
+    <div class="stat"><div class="k">OC validadas</div><div class="v">${cant}</div></div>
+    <div class="stat total"><div class="k">USD recaudado</div><div class="v">${fmt(total)}</div></div>
+    <div class="stat"><div class="k">Ticket promedio</div><div class="v">${fmt(ticket)}</div></div>
+    <div class="stat"><div class="k">Vendedores</div><div class="v">${vend}</div></div>`;
+}
+$("#fTexto").addEventListener("input",()=>{ if(estadoActual==="aprobado") renderValidadas(); });
+$("#fVendedor").addEventListener("change",()=>{ if(estadoActual==="aprobado") renderValidadas(); });
+$("#fMes").addEventListener("change",()=>{ if(estadoActual==="aprobado") renderValidadas(); });
+$("#fLimpiar").addEventListener("click",()=>{ $("#fTexto").value=""; $("#fVendedor").value=""; $("#fMes").value=""; renderValidadas(); });
+
+/* Vendedor editable: si quien envió no es vendedor (ej. alejandra.c manda
+   en nombre de otro), se elige acá al vendedor real. Queda en vendedor_final;
+   el remitente original no se toca (trazabilidad). */
+let VEND_MAP={};
+async function cargarVendedores(){
+  if(Object.keys(VEND_MAP).length) return;
+  try{ VEND_MAP=await (await fetch("/api/vendedores")).json(); }catch(e){}
+}
+function selVendedor(r){
+  // reasignado (ej. Erik->Diego) cuenta como resuelto: no marcar "(no es vendedor)"
+  const esVend = !!VEND_MAP[(r.sender||"").toLowerCase()] || !!r.aviso_remitente;
+  const ops = Object.entries(VEND_MAP).map(([em,n])=>
+    `<option value="${em}" ${r.vendedor_final===em?"selected":""}>${esc(n)}</option>`).join("");
+  return `<select class="vend-sel" onchange="cambiarVendedor(${r.id}, this.value)" onclick="event.stopPropagation()">
+    <option value="" ${!r.vendedor_final?"selected":""}>${esc(r.vendedor||r.sender||"")}${esVend?"":" (no es vendedor)"}</option>
+    ${ops}</select>`;
+}
+async function cambiarVendedor(id, v){
+  const res=await post(`/api/oc/${id}/editar`,{vendedor_final: v||null});
+  toast(res.ok ? (v ? "Vendedor corregido: "+(VEND_MAP[v]||v) : "Vuelve al remitente original") : "Error: "+(res.error||""), !res.ok);
+}
+/* Fecha de la OC editable: por defecto el día de recepción; el que valida puede
+   corregirla (ej. OC de fin de mes asignada al mes que corresponde). */
+async function cambiarFechaOC(id, v, estado){
+  const res=await post(`/api/oc/${id}/editar`,{fecha_oc: v||null});
+  if(!res.ok){ toast("Error: "+(res.error||""), true); return; }
+  toast(v ? "Fecha de OC actualizada" : "Fecha de OC vuelve a la de recepción");
+  // en Validadas puede cambiar de mes -> reordenar; en pendientes alcanza con guardar
+  if(estado==="aprobado"){ const i=LISTA_ROWS.findIndex(x=>x.id===id); if(i>=0) LISTA_ROWS[i].fecha_oc=v||LISTA_ROWS[i].received?.slice(0,10); armarFiltros(); renderValidadas(); }
+}
+
+function tarjeta(r){
+  const el=document.createElement("div"); el.className="card";
+  const conf=(r.confianza||"alta");
+  const flags=(r.flags||[]).map(f=>`<span class="flag">${f.replace(/_/g," ")}</span>`).join("");
+  const montoView = r.monto==null? "": r.monto;
+  const fechaOc=(r.fecha_oc||(r.received||"").slice(0,10)||"");
+  const fechaInput=`<input type="date" class="fecha-oc" value="${fechaOc}" title="Fecha de la OC — editable" onclick="event.stopPropagation()" onchange="cambiarFechaOC(${r.id}, this.value, '${r.estado}')">`;
+  const aviso=r.aviso_remitente?`<div class="c-aviso">⚠ Enviado por ${esc(r.aviso_remitente)} (no es vendedor) · asignado a <b>${esc(r.vendedor||"")}</b></div>`:"";
+  let acciones;
+  const bMsg = `<button class="btn btn-abrir btn-msg">⬇ .msg</button>`;
+  if(r.estado==="pendiente"){
+    acciones=`<button class="btn btn-abrir">Abrir mail</button>${bMsg}
+              <button class="btn btn-ok">✓ Validar</button>
+              <button class="btn btn-no">✗ Rechazar</button>`;
+  } else if(r.estado==="aprobado"){
+    acciones=`<div class="oc-code">${r.oc_codigo||""}</div>
+              <button class="btn btn-abrir">Abrir mail</button>${bMsg}
+              <button class="btn btn-editar">✎ Editar</button>
+              <button class="btn btn-no btn-eliminar">🗑 Eliminar</button>`;
+  } else {
+    acciones=`<button class="btn btn-abrir">Abrir mail</button>${bMsg}`;
+  }
+  el.innerHTML=`
+    <div class="cdot ${conf}"></div>
+    <div>
+      <div class="c-empresa">${r.empresa||"(sin empresa)"}</div>
+      ${aviso}
+      <div class="c-sub">${fechaInput} · ${r.estado==="pendiente" ? selVendedor(r) : esc(r.vendedor||r.sender||"")} · OC ${r.oc_numero||"—"}${r.fecha_entrega?" · entrega: "+esc(r.fecha_entrega):""}<br>${esc((r.subject||"").slice(0,80))}</div>
+      <div class="c-flags">${flags}</div>
+    </div>
+    <div class="c-monto">
+      <label>Monto ${r.estado==="pendiente"?"(editable)":""}</label>
+      <div class="monto-in"><span class="cur">${r.moneda||"USD"}</span>
+        <input type="text" value="${r.estado==="aprobado"&&r.monto_final!=null?r.monto_final:montoView}" ${r.estado!=="pendiente"?"disabled":""}></div>
+      <div class="c-orig">texto: ${r.texto_original||"—"} · ${r.fuente||""}</div>
+    </div>
+    <div class="acts">${acciones}</div>`;
+
+  const inp=el.querySelector("input");
+  const bAbrir=el.querySelector(".btn-abrir:not(.btn-msg)");
+  if(bAbrir) bAbrir.onclick=async()=>{ bAbrir.disabled=true;
+    const res=await post(`/api/oc/${r.id}/abrir`); bAbrir.disabled=false;
+    toast(res.ok?"Abriendo el mail en Outlook…":("Error: "+res.error), !res.ok); };
+  const bMsgEl=el.querySelector(".btn-msg");
+  if(bMsgEl) bMsgEl.onclick=()=>{
+    if(!r.descargado && r.estado==="pendiente"){ toast("Primero descargá los pendientes a revisión",true); return; }
+    window.open(`/api/oc/${r.id}/descargar`,"_blank");
+  };
+  const bOk=el.querySelector(".btn-ok");
+  if(bOk) bOk.onclick=async()=>{
+    const val=parseFloat((inp.value||"").toString().replace(",","."));
+    if(isNaN(val)){ toast("Monto inválido",true); return; }
+    if(!confirm(`Validar ${r.empresa} por USD ${val}?\nSe le asignará un número y se guardará el mail + adjuntos.`)) return;
+    bOk.disabled=true;
+    const res=await post(`/api/oc/${r.id}/validar`,{monto_final:val});
+    if(res.ok){ toast(`✓ ${res.oc_codigo} · se movió a Validadas`);
+      animarSalida(el,"aprobado"); cargarResumen(); }
+    else { bOk.disabled=false; toast("Error: "+res.error,true); }
+  };
+  const bNo=el.querySelector(".btn-no:not(.btn-eliminar)");
+  if(bNo) bNo.onclick=async()=>{
+    if(!confirm(`¿Rechazar ${r.empresa}? No se le asigna número.`)) return;
+    const res=await post(`/api/oc/${r.id}/rechazar`);
+    if(res.ok){ toast("✗ Rechazada · se movió a Rechazadas"); animarSalida(el,"rechazado"); cargarResumen(); }
+  };
+  const bEdit=el.querySelector(".btn-editar");
+  if(bEdit) bEdit.onclick=()=>formEditar(el, r);
+  const bDel=el.querySelector(".btn-eliminar");
+  if(bDel) bDel.onclick=async()=>{
+    if(!confirm(`¿Eliminar ${r.oc_codigo||""} (${r.empresa})?\nSale de Validadas y del ranking Comercial. Queda registrada como eliminada.`)) return;
+    const res=await post(`/api/oc/${r.id}/eliminar`);
+    if(res.ok){ toast(`${r.oc_codigo||"OC"} eliminada`); animarSalida(el,"eliminado"); cargarResumen(); }
+    else toast("Error: "+res.error,true);
+  };
+  return el;
+}
+
+function esc(s){ return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+/* Formulario inline para corregir una OC validada */
+function formEditar(el, r){
+  const montoAct = (r.monto_final!=null?r.monto_final:(r.monto!=null?r.monto:""));
+  el.innerHTML=`
+    <div class="cdot ${r.confianza||'alta'}"></div>
+    <div style="grid-column:2 / -1;">
+      <div style="font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-bottom:10px;">
+        Editando ${r.oc_codigo||""} · vendedor: ${esc(r.vendedor||r.sender||"")}</div>
+      <div class="edit-grid">
+        <label>Cliente<input data-f="empresa" value="${esc(r.empresa)}"></label>
+        <label>N° OC del cliente<input data-f="oc_numero" value="${esc(r.oc_numero)}"></label>
+        <label>Monto (${esc(r.moneda||'USD')})<input data-f="monto_final" value="${esc(montoAct)}"></label>
+        <label>Fecha de entrega<input data-f="fecha_entrega" value="${esc(r.fecha_entrega)}"></label>
+      </div>
+      <div class="acts" style="flex-direction:row;margin-top:14px;gap:8px;">
+        <button class="btn btn-ok btn-guardar">Guardar</button>
+        <button class="btn btn-abrir btn-cancelar">Cancelar</button>
+      </div>
+    </div>`;
+  el.querySelector(".btn-cancelar").onclick=()=>cargarLista();
+  el.querySelector(".btn-guardar").onclick=async()=>{
+    const body={};
+    el.querySelectorAll("[data-f]").forEach(i=>{ body[i.dataset.f]=i.value.trim(); });
+    const res=await post(`/api/oc/${r.id}/editar`, body);
+    if(res.ok){ toast("✓ Cambios guardados"); cargarLista(); cargarResumen(); }
+    else toast("Error: "+res.error,true);
+  };
+}
+
+async function post(url,body){
+  try{
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:body?JSON.stringify(body):"{}"});
+    return await r.json();
+  }catch(e){ return {ok:false,error:"sin conexión"}; }
+}
+
+$("#btnActualizar").onclick=async()=>{
+  const b=$("#btnActualizar"), m=$("#ingestaMsg");
+  b.disabled=true; m.textContent="Leyendo la casilla… (unos segundos)";
+  const res=await post("/api/actualizar");
+  b.disabled=false;
+  if(res.ok){
+    let txt = res.nuevas+" OC nueva"+(res.nuevas===1?"":"s");
+    if(res.sin_extraer) txt += " · "+res.sin_extraer+" necesita(n) revisión de Cowork";
+    m.textContent="✓ "+txt; toast(txt); cargarResumen(); cargarLista();
+  } else { m.textContent=""; toast("Error: "+(res.error||"no se pudo"),true); }
+};
+
+$("#btnIngestar").onclick=async()=>{
+  const b=$("#btnIngestar"), m=$("#ingestaMsg");
+  b.disabled=true; m.textContent="Descargando desde Outlook… (puede tardar)";
+  const res=await post("/api/ingestar");
+  b.disabled=false;
+  if(res.ok){ m.textContent="✓ "+res.descargadas+" descargadas a revisión"; toast(res.descargadas+" OC descargadas a revisión"); cargarResumen(); cargarLista(); }
+  else { m.textContent=""; toast("Error: "+res.error,true); }
+};
+
+/* ── Órdenes de fabricación ── */
+let fabEstado="pendiente";
+$("#fabTabs").addEventListener("click",e=>{
+  const t=e.target.closest(".tab"); if(!t) return;
+  document.querySelectorAll("#fabTabs .tab").forEach(x=>x.classList.toggle("active",x===t));
+  fabEstado=t.dataset.fab; cargarFabricacion();
+});
+async function cargarFabricacion(){
+  const cont=$("#fabLista");
+  try{
+    const r=await (await fetch("/api/fabricacion?estado="+fabEstado)).json();
+    const set=(id,n)=>{ const e=document.getElementById(id); if(e) e.textContent=n; };
+    set("fcnt-pendiente", r.conteos.pendiente); set("fcnt-aplica", r.conteos.aplica); set("fcnt-no_aplica", r.conteos.no_aplica);
+    if(!r.items.length){ cont.innerHTML=`<div class="empty">No hay OC de fabricación en "${fabEstado}". Aparecen acá cuando llega una OC con <b>Fabricación: Sí</b> y está validada.</div>`; return; }
+    cont.innerHTML="";
+    r.items.forEach(oc=>cont.appendChild(tarjetaFab(oc)));
+  }catch(e){ cont.innerHTML=`<div class="empty">Error de conexión.</div>`; }
+}
+function tarjetaFab(r){
+  const el=document.createElement("div"); el.className="card";
+  const fecha=(r.received||"").slice(0,10);
+  let acciones;
+  if(r.fab_estado==="aplica") acciones=`<div class="oc-code">✓ ${r.spf||"Aplica"}</div><button class="btn btn-abrir btn-fabreset">Revertir</button>`;
+  else if(r.fab_estado==="no_aplica") acciones=`<div style="color:var(--muted);font-family:var(--f-mono);font-size:12px;align-self:center;">No aplica</div><button class="btn btn-abrir btn-fabreset">Revertir</button>`;
+  else acciones=`<button class="btn btn-ok btn-aplica">✓ Aplica</button><button class="btn btn-no btn-noaplica">✗ No aplica</button>`;
+  el.innerHTML=`
+    <div class="cdot alta"></div>
+    <div>
+      <div class="c-empresa">${r.empresa||"(sin empresa)"}</div>
+      <div class="c-sub">${fecha} · ${r.vendedor||r.sender||""} · ${r.oc_codigo||""} · N° ${r.oc_numero||"—"}</div>
+    </div>
+    <div class="c-monto"><label>Monto</label>
+      <div class="monto-in"><span class="cur">${r.moneda||"USD"}</span>
+        <input type="text" value="${r.monto_final!=null?r.monto_final:(r.monto!=null?r.monto:"")}" disabled></div>
+      <div class="c-orig">entrega: ${r.fecha_entrega||"—"}</div></div>
+    <div class="acts">${acciones}</div>`;
+  const dec=async(decision)=>{
+    const res=await post(`/api/oc/${r.id}/fabricacion`,{decision});
+    if(res.ok){ toast(decision==="aplica"?("Enviada a fabricación como "+(res.spf||"")+" ✓"):decision==="no_aplica"?"Marcada: No aplica":"Vuelta a pendientes");
+      el.remove(); cargarFabricacion(); }
+  };
+  const a=el.querySelector(".btn-aplica"); if(a) a.onclick=()=>dec("aplica");
+  const n=el.querySelector(".btn-noaplica"); if(n) n.onclick=()=>dec("no_aplica");
+  const rst=el.querySelector(".btn-fabreset"); if(rst) rst.onclick=()=>dec("pendiente");
+  return el;
+}
+
+/* ── Clientes ── */
+async function cargarClientes(){
+  const tab=$("#cliTable");
+  try{
+    const r=await (await fetch("/api/clientes_resumen")).json();
+    const cs=r.clientes||[];
+    const totalUsd=cs.reduce((a,c)=>a+c.total,0);
+    const top=cs[0];
+    $("#cliStats").innerHTML=`
+      <div class="stat"><div class="k">Clientes</div><div class="v">${cs.length}</div></div>
+      <div class="stat total"><div class="k">USD validado</div><div class="v">${fmt(totalUsd)}</div></div>
+      <div class="stat"><div class="k">Top cliente</div><div class="v" style="font-size:16px;">${top?esc(top.cliente):"—"}</div></div>
+      <div class="stat"><div class="k">Ticket prom. general</div><div class="v">${fmt(cs.length?totalUsd/cs.reduce((a,c)=>a+c.oc,0):0)}</div></div>`;
+    if(!cs.length){ tab.innerHTML=`<tbody><tr><td class="com-empty">Sin OC validadas todavía.</td></tr></tbody>`; }
+    else{
+      const max=cs[0].total||1;
+      tab.innerHTML=`<thead><tr><th class="pos">#</th><th>Cliente</th>
+          <th class="num">OC</th><th class="num">USD total</th><th class="num">Ticket prom.</th>
+          <th class="num">Fabricación</th><th>Últ. OC</th><th>Entregas típicas</th></tr></thead><tbody>`+
+        cs.map((c,i)=>`<tr>
+          <td class="pos">${i+1}</td>
+          <td class="vend">${esc(c.cliente)}<div class="rank-bar" style="width:${Math.max(6,100*c.total/max)}%"></div></td>
+          <td class="num">${c.oc}</td>
+          <td class="num">${fmt(c.total)}</td>
+          <td class="num">${fmt(c.ticket)}</td>
+          <td class="num">${c.fab}/${c.oc}</td>
+          <td style="font-family:var(--f-mono);font-size:12px;">${c.ultima||"—"}</td>
+          <td style="font-family:var(--f-mono);font-size:11.5px;color:var(--muted);">${esc(c.entregas)}</td>
+        </tr>`).join("")+`</tbody>`;
+    }
+    // notas: markdown minimo (## seccion, - item)
+    const secs=(r.notas||"").split(/^## /m).slice(1);
+    $("#cliNotas").innerHTML = secs.length
+      ? secs.map(s=>{
+          const lineas=s.split("\n"); const titulo=lineas.shift().trim();
+          const items=lineas.filter(l=>l.trim().startsWith("- ")).map(l=>`<li>${esc(l.trim().slice(2))}</li>`).join("");
+          return `<div class="cli-nota-sec"><b>${esc(titulo)}</b><ul>${items}</ul></div>`;
+        }).join("")
+      : `<div class="empty">Todavía no hay notas.</div>`;
+  }catch(e){ tab.innerHTML=`<tbody><tr><td class="com-empty">Error de conexión.</td></tr></tbody>`; }
+}
+
+/* ── Sesión / roles ── */
+let MIS_VISTAS=[];
+function rolLabel(r){ return {gerencia:"Gerencia", administracion:"Administración", usuarios:"user"}[r]||r; }
+/* ── Historial interno: flechas atrás / adelante ── */
+let arHist=[], arPos=-1, arNav=false;
+function arRegistrar(v){
+  if(arNav) return;
+  if(arHist[arPos]===v) return;                 // no duplicar la misma vista
+  arHist=arHist.slice(0, arPos+1);
+  arHist.push(v); arPos=arHist.length-1;
+  arFlechas();
+}
+function arFlechas(){
+  const a=$("#btnAtras"), d=$("#btnAdelante");
+  if(a) a.disabled = arPos<=0;
+  if(d) d.disabled = arPos>=arHist.length-1;
+}
+function arIr(delta){
+  const nuevo=arPos+delta;
+  if(nuevo<0 || nuevo>=arHist.length) return;
+  arPos=nuevo; arNav=true;
+  try{ irAVista(arHist[arPos]); } finally { arNav=false; arFlechas(); }
+}
+$("#btnAtras").addEventListener("click",()=>arIr(-1));
+$("#btnAdelante").addEventListener("click",()=>arIr(1));
+
+function irAVista(view){
+  arRegistrar(view);
+  $("#nav").querySelectorAll("a").forEach(el=>el.classList.toggle("active", el.dataset.view===view));
+  document.body.className = "view-"+view;
+  if(view==="oc"){ cargarVendedores(); cargarResumen(); cargarLista(); }
+  else if(view==="comercial"){ cargarComercial(); }
+  else if(view==="calendario"){ cargarCalendario(); }
+  else if(view==="fabricacion"){ cargarFabricacion(); }
+  else if(view==="clientes"){ cargarClientes(); }
+  else { cargarResumen(); }
+}
+async function init(){
+  let me;
+  try{ const r=await fetch("/api/me"); if(!r.ok){ location.href="/login"; return; } me=await r.json(); }
+  catch(e){ location.href="/login"; return; }
+  MIS_VISTAS = me.vistas||[];
+  document.querySelectorAll("#nav li").forEach(li=>{
+    const a=li.querySelector("a");
+    li.style.display = (a && MIS_VISTAS.includes(a.dataset.view)) ? "" : "none";
+  });
+  const foot=$("#drawerFoot");
+  if(foot) foot.innerHTML=`<div style="margin-bottom:8px;color:var(--ink);">${esc(me.nombre||me.usuario)} · <span style="color:var(--node)">${rolLabel(me.rol)}</span></div>`+
+    `<a href="/logout" style="color:var(--muted);text-decoration:none;">↩ Cerrar sesión</a>`;
+  const inicio = (me.inicio && MIS_VISTAS.includes(me.inicio)) ? me.inicio : (MIS_VISTAS[0]||"calendario");
+  irAVista(inicio);
+}
+init();
+</script>
+</body>
+</html>
